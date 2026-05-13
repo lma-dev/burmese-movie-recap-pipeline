@@ -60,7 +60,7 @@ Each automated step is a queue batch — the UI polls every 2–3 s and reflects
 - Node.js 18+ (Vite + Tailwind)
 - Python 3.10+
 - **System binaries**: `ffmpeg`, `ffprobe`, `yt-dlp` on `$PATH`
-- SQLite (default) or MySQL
+- MySQL 5.7+ / 8.x
 
 ## Quick start
 
@@ -73,8 +73,8 @@ php artisan key:generate
 # 2. Edit .env — at minimum set OPENAI_API_KEY
 #    EDGE_TTS_VOICE has a sensible default (my-MM-NilarNeural)
 
-# 3. DB
-touch database/database.sqlite
+# 3. DB — create the MySQL database, then set DB_DATABASE/DB_USERNAME/DB_PASSWORD in .env
+mysql -uroot -e "CREATE DATABASE burmese_recap CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;"
 php artisan migrate
 
 # 4. Python deps
