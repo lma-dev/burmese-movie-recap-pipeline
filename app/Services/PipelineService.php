@@ -17,12 +17,15 @@ use Throwable;
  * High-level pipeline orchestration. Livewire components call into this
  * service; the service dispatches jobs and updates the project row.
  *
- * Each method maps 1:1 to a user action in the design:
- *   - startSource()    → "Fetch" button on Step 0
- *   - startSplit()     → "Start split" on Step 1
- *   - markEditSrtDone()→ "Next" on Step 3 (then auto-runs Voice)
- *   - startVoice()     → auto-runs after Edit SRT
- *   - startRender()    → auto-runs after Voice
+ * Flow (5 steps):
+ *   Source     → startSource()        ("Fetch")
+ *   Split      → startSplit()         (auto-runs on entry; collects all settings)
+ *   Translate  → auto-runs after split
+ *   EditSrt    → markEditSrtDone()    ("Next" — transitions to Finalize)
+ *   Finalize   → startFinalize()      (auto-runs voice → render chain)
+ *
+ * Voice and Render still have their own status columns + jobs internally,
+ * but the user-facing step bar treats them as one combined "Finalize" step.
  */
 class PipelineService
 {
@@ -47,14 +50,24 @@ class PipelineService
 
     /**
      * User finished editing subtitles in the Edit-SRT step.
-     * The next two steps (Voice → Render) auto-run as a batch chain.
+     * The Finalize step (voice → render) auto-runs from there.
      */
     public function markEditSrtDone(Project $project): void
     {
         $project->update([
             'edit_srt_status' => StepStatus::Done,
-            'current_step'    => PipelineStep::Voice,
+            'current_step'    => PipelineStep::Finalize,
+            'voice_status'    => StepStatus::Pending,
+            'render_status'   => StepStatus::Pending,
         ]);
+    }
+
+    /**
+     * Kick off voice generation; on success, automatically chains into
+     * render. This is the single entry point used by the Finalize page.
+     */
+    public function startFinalize(Project $project): void
+    {
         $this->startVoice($project);
     }
 
@@ -62,7 +75,7 @@ class PipelineService
     {
         $project->update([
             'voice_status' => StepStatus::Running,
-            'current_step' => PipelineStep::Voice,
+            'current_step' => PipelineStep::Finalize,
         ]);
 
         $jobs = $project->segments()->get()->map(fn ($s) => new GenerateVoiceJob($s->id))->all();
@@ -77,7 +90,6 @@ class PipelineService
             ->then(function (Batch $batch) use ($project) {
                 Project::whereKey($project->id)->update([
                     'voice_status' => StepStatus::Done->value,
-                    'current_step' => PipelineStep::Render->value,
                 ]);
                 app(self::class)->startRender(Project::findOrFail($project->id));
             })
@@ -94,7 +106,7 @@ class PipelineService
     {
         $project->update([
             'render_status' => StepStatus::Running,
-            'current_step'  => PipelineStep::Render,
+            'current_step'  => PipelineStep::Finalize,
         ]);
 
         $jobs = $project->segments()->get()->map(fn ($s) => new RenderSegmentJob($s->id))->all();

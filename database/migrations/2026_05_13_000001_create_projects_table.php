@@ -35,6 +35,7 @@ return new class extends Migration
             // Voice step
             // -----------------------------------------------------
             $table->string('audio_mix_mode')->default('duck'); // duck | replace
+            $table->string('voice_tone')->default('neutral');  // VoiceTone enum value
 
             // -----------------------------------------------------
             // Pipeline state

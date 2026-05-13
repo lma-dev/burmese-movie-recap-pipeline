@@ -94,10 +94,13 @@ class EditSrt extends Component
         );
     }
 
-    public function next(PipelineService $pipeline, SrtWriter $writer): void
+    /**
+     * Called from the confirm dialog. Persists subtitle edits, writes the
+     * SRT files, kicks off the Finalize chain (voice → render), then
+     * navigates the user to the Finalize page to watch progress.
+     */
+    public function confirmAndFinalize(PipelineService $pipeline, SrtWriter $writer): void
     {
-        // Persist every line in case it wasn't auto-saved per-keystroke,
-        // and write SRT files for the voice/render steps.
         foreach ($this->lines as $line) {
             Subtitle::whereKey($line['id'])->update(['burmese_text' => $line['burmese_text']]);
         }
@@ -107,7 +110,9 @@ class EditSrt extends Component
         }
 
         $pipeline->markEditSrtDone($this->project);
-        $this->redirectRoute('pipeline.voice', ['p' => $this->project->id], navigate: true);
+        $pipeline->startFinalize($this->project->refresh());
+
+        $this->redirectRoute('pipeline.finalize', ['p' => $this->project->id], navigate: true);
     }
 
     public function back(): void

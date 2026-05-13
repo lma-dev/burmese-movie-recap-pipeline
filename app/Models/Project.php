@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\AudioMixMode;
 use App\Enums\PipelineStep;
 use App\Enums\StepStatus;
+use App\Enums\VoiceTone;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -24,6 +25,7 @@ class Project extends Model
         'voice_status'      => StepStatus::class,
         'render_status'     => StepStatus::class,
         'audio_mix_mode'    => AudioMixMode::class,
+        'voice_tone'        => VoiceTone::class,
         'segment_seconds'   => 'integer',
         'segment_count'     => 'integer',
         'source_duration_sec' => 'integer',
@@ -47,7 +49,28 @@ class Project extends Model
     // -----------------------------------------------------------------
     public function statusFor(PipelineStep $step): StepStatus
     {
-        return $this->{$step->value.'_status'};
+        if ($step === PipelineStep::Finalize) {
+            return $this->finalizeStatus();
+        }
+
+        return $this->{$step->value.'_status'} ?? StepStatus::Pending;
+    }
+
+    /**
+     * The Finalize step wraps Voice + Render. Its aggregate state is what
+     * the step bar and gating logic care about.
+     */
+    public function finalizeStatus(): StepStatus
+    {
+        $voice  = $this->voice_status  ?? StepStatus::Pending;
+        $render = $this->render_status ?? StepStatus::Pending;
+
+        return match (true) {
+            $voice === StepStatus::Failed || $render === StepStatus::Failed     => StepStatus::Failed,
+            $render === StepStatus::Done                                        => StepStatus::Done,
+            $voice === StepStatus::Running || $render === StepStatus::Running   => StepStatus::Running,
+            default                                                             => $voice,
+        };
     }
 
     public function setStatusFor(PipelineStep $step, StepStatus $status): void

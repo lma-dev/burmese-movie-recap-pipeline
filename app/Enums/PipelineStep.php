@@ -3,10 +3,15 @@
 namespace App\Enums;
 
 /**
- * The 6 ordered steps of the Burmese movie recap pipeline.
+ * The 5 ordered steps of the Burmese movie recap pipeline.
  *
  * Stored on the projects table as a string column (`current_step`).
  * The numeric ordinal returned by ::order() drives the step bar UI.
+ *
+ * All up-front configuration (segment length, narration tone, audio mix,
+ * frame preset, etc.) is collected in the Split step; the user only
+ * interacts again on Edit-SRT to refine subtitles. Voice + Render run
+ * back-to-back inside a single "Finalize" page.
  */
 enum PipelineStep: string
 {
@@ -14,10 +19,9 @@ enum PipelineStep: string
     case Split     = 'split';
     case Translate = 'translate';
     case EditSrt   = 'edit_srt';
-    case Voice     = 'voice';
-    case Render    = 'render';
+    case Finalize  = 'finalize';
 
-    /** Zero-based ordinal — matches the design step numbers (0..5). */
+    /** Zero-based ordinal — matches the design step numbers (0..4). */
     public function order(): int
     {
         return match ($this) {
@@ -25,8 +29,7 @@ enum PipelineStep: string
             self::Split     => 1,
             self::Translate => 2,
             self::EditSrt   => 3,
-            self::Voice     => 4,
-            self::Render    => 5,
+            self::Finalize  => 4,
         };
     }
 
@@ -34,11 +37,10 @@ enum PipelineStep: string
     {
         return match ($this) {
             self::Source    => 'Source',
-            self::Split     => 'Split',
+            self::Split     => 'Settings',
             self::Translate => 'Translate',
             self::EditSrt   => 'Edit SRT',
-            self::Voice     => 'Voice',
-            self::Render    => 'Render',
+            self::Finalize  => 'Finalize',
         };
     }
 
@@ -48,12 +50,12 @@ enum PipelineStep: string
         return 'pipeline.'.$this->value;
     }
 
-    /** @return array<int, self> all 6 steps in order */
+    /** @return array<int, self> all steps in order */
     public static function ordered(): array
     {
         return [
             self::Source, self::Split, self::Translate,
-            self::EditSrt, self::Voice, self::Render,
+            self::EditSrt, self::Finalize,
         ];
     }
 }
