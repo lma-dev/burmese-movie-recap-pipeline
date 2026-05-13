@@ -8,9 +8,7 @@ use App\Livewire\Pipeline\Source;
 use App\Livewire\Pipeline\Split;
 use App\Livewire\Pipeline\Translate;
 use App\Livewire\Pipeline\Voice;
-use App\Models\Segment;
 use Illuminate\Support\Facades\Route;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 // Entry: the Source step IS the home page (matches the design's Slide 1
 // "Overview" → "Step 0" flow — paste a URL and you're in).
@@ -38,7 +36,5 @@ Route::get('/segments/{segment}/download', [DownloadController::class, 'segment'
     ->name('segments.download');
 
 // Inline streaming endpoint for the <video> preview on the Render step.
-Route::get('/segments/{segment}/stream', function (Segment $segment): BinaryFileResponse {
-    abort_unless($segment->rendered_path && is_file($segment->rendered_path), 404);
-    return response()->file($segment->rendered_path);
-})->name('segments.stream');
+Route::get('/segments/{segment}/stream', [DownloadController::class, 'stream'])
+    ->name('segments.stream');

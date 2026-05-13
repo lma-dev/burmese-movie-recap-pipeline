@@ -16,19 +16,19 @@ class Voice extends Component
     #[Url(as: 'p')]
     public ?int $projectId = null;
 
-    public string $mixMode = 'duck';
+    public AudioMixMode $mixMode = AudioMixMode::Duck;
 
     public ?Project $project = null;
 
     public function mount(): void
     {
         $this->project = Project::with('segments')->findOrFail($this->projectId);
-        $this->mixMode = $this->project->audio_mix_mode->value;
+        $this->mixMode = $this->project->audio_mix_mode;
     }
 
-    public function updatedMixMode(string $value): void
+    public function updatedMixMode(): void
     {
-        $this->project->update(['audio_mix_mode' => AudioMixMode::from($value)]);
+        $this->project->update(['audio_mix_mode' => $this->mixMode]);
     }
 
     public function continueToRender(): void

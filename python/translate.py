@@ -27,15 +27,9 @@ import json
 import os
 import sys
 
-from _common import die, progress, read_payload, write_result
+from _common import die, load_prompt, progress, read_payload, write_result
 
-SYSTEM_PROMPT = (
-    "You are a professional Burmese subtitler. Translate each numbered line "
-    "from the source language into natural, conversational Burmese suitable "
-    "for movie-recap subtitles. Keep the SAME number of output lines as "
-    "input lines and keep their line numbers. Reply with strict JSON of the "
-    "shape {\"translations\":[{\"line_number\":N,\"burmese\":\"...\"}]}."
-)
+SYSTEM_PROMPT = load_prompt("translate_system")
 
 
 def main() -> None:

@@ -31,7 +31,7 @@ import re
 import sys
 import time
 
-from _common import die, progress, read_payload, write_result
+from _common import die, load_prompt, progress, read_payload, write_result
 
 
 def main() -> None:
@@ -102,13 +102,7 @@ def transcribe_openai(seg_path: str, api_key: str, model: str) -> list[dict]:
 # ---------------------------------------------------------------------------
 # Google Gemini
 # ---------------------------------------------------------------------------
-GEMINI_TRANSCRIBE_PROMPT = (
-    "Transcribe the spoken audio in this clip. Split it into short "
-    "subtitle-style segments (3–8 seconds each). Reply with strict JSON "
-    "of the shape "
-    "{\"segments\":[{\"start\":\"MM:SS.mmm\",\"end\":\"MM:SS.mmm\",\"text\":\"...\"}]} "
-    "with no commentary. Preserve the original spoken language — do not translate."
-)
+GEMINI_TRANSCRIBE_PROMPT = load_prompt("transcribe_gemini")
 
 
 def transcribe_gemini(seg_path: str, api_key: str, model: str) -> list[dict]:

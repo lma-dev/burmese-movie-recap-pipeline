@@ -1,0 +1,1 @@
+Transcribe the spoken audio in this clip. Split it into short subtitle-style segments (3–8 seconds each). Reply with strict JSON of the shape {"segments":[{"start":"MM:SS.mmm","end":"MM:SS.mmm","text":"..."}]} with no commentary. Preserve the original spoken language — do not translate.

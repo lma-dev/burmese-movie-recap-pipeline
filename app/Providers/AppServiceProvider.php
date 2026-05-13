@@ -20,6 +20,7 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->singleton(\App\Services\PipelinePaths::class);
         $this->app->singleton(\App\Services\SrtWriter::class);
+        $this->app->singleton(\App\Services\ProjectArchiver::class);
     }
 
     public function boot(): void

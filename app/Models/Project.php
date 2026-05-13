@@ -71,6 +71,14 @@ class Project extends Model
     }
 
     /**
+     * Filesystem-safe slug used as the base of download filenames.
+     */
+    public function downloadSlug(): string
+    {
+        return (string) str($this->source_title ?? 'recap')->slug('_');
+    }
+
+    /**
      * Resolve the configured frame preset (from config/pipeline.php)
      * — falls back to the default if the stored key is unknown.
      */

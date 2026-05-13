@@ -90,7 +90,7 @@
                             ];
                         @endphp
                         @foreach ($opts as $val => $opt)
-                            @php $checked = $mixMode === $val; @endphp
+                            @php $checked = $mixMode->value === $val; @endphp
                             <label style="display:flex; align-items:flex-start; gap: 12px; padding: 14px 16px;
                                           border: {{ $checked ? '1.5px solid var(--blue)' : '0.5px solid var(--border)' }};
                                           background: {{ $checked ? 'var(--blue-bg)' : 'transparent' }};

@@ -65,3 +65,23 @@ def require_env(key: str) -> str:
 def ensure_dir(path: str) -> str:
     os.makedirs(path, exist_ok=True)
     return path
+
+
+_PROMPTS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "prompts")
+
+
+def load_prompt(name: str) -> str:
+    """
+    Load a prompt template from `python/prompts/<name>.txt`.
+
+    Prompts live in their own folder (not embedded in the scripts) so they
+    can be tuned without touching code. Trailing whitespace is stripped so
+    a file-ending newline doesn't leak into API requests.
+    """
+    path = os.path.join(_PROMPTS_DIR, f"{name}.txt")
+    try:
+        with open(path, "r", encoding="utf-8") as fh:
+            return fh.read().rstrip()
+    except FileNotFoundError:
+        die(f"prompt file not found: {path}")
+        return ""  # unreachable
