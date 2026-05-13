@@ -1,0 +1,12 @@
+# Python dependencies for the Burmese Movie Recap Pipeline
+# Install with: pip install -r python/requirements.txt
+#
+# System binaries also required (install separately):
+#   - ffmpeg  (with libass for burned-in subtitles)
+#   - ffprobe (ships with ffmpeg)
+#   - yt-dlp  (binary; pip-installable too — covered below)
+
+yt-dlp>=2024.4.9
+openai>=1.30.0
+edge-tts>=6.1.10
+python-dotenv>=1.0.1
