@@ -57,26 +57,50 @@
                 </div>
 
                 {{-- Live progress card. Polls the project row every 2s while running. --}}
-                @if ($project && $status !== StepStatus::Pending)
-                    <div wire:poll.2s class="card-2" style="padding: 16px; display:flex; flex-direction:column; gap: 12px;">
+                @if ($project)
+                    @php
+                        $jobLabel = match ($status) {
+                            StepStatus::Pending => 'Queued — waiting for worker',
+                            StepStatus::Running => 'Fetching from source…',
+                            StepStatus::Done    => 'Done',
+                            StepStatus::Failed  => 'Failed',
+                        };
+                        $barWidth = match ($status) {
+                            StepStatus::Pending => 15,
+                            StepStatus::Running => 65,
+                            StepStatus::Done    => 100,
+                            StepStatus::Failed  => 100,
+                        };
+                        $barClass = match ($status) {
+                            StepStatus::Done   => 'green',
+                            StepStatus::Failed => 'red',
+                            default            => '',
+                        };
+                    @endphp
+                    <div wire:poll.2s="pollStatus" class="card-2" style="padding: 16px; display:flex; flex-direction:column; gap: 12px;">
                         <div style="display:flex; justify-content:space-between; font-size:12px;">
-                            <span class="ink-2" style="font-weight:500;">{{ $status->label() }}</span>
+                            <span class="ink-2" style="font-weight:500;">{{ $jobLabel }}</span>
+                            <span class="{{ $status->pillClass() }}">{{ $status->label() }}</span>
                         </div>
-                        <div class="progress {{ $status === StepStatus::Done ? 'green' : '' }}">
-                            <i style="width: {{ $status === StepStatus::Done ? 100 : 60 }}%;"></i>
+                        <div class="progress {{ $barClass }}">
+                            <i style="width: {{ $barWidth }}%;"></i>
                         </div>
                         <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap: 8px; font-size: 11px; color: var(--ink-3);">
-                            @php $done = $status === StepStatus::Done; @endphp
-                            <div style="display:flex; align-items:center; gap:6px;">
-                                <svg class="ic ic-sm" style="color: var(--green);"><use href="#i-check"/></svg>Connecting
+                            @php
+                                $isQueued  = $status === StepStatus::Pending;
+                                $isRunning = $status === StepStatus::Running;
+                                $isDone    = $status === StepStatus::Done;
+                            @endphp
+                            <div style="display:flex; align-items:center; gap:6px; color: {{ ($isRunning || $isDone) ? 'var(--green)' : 'var(--ink-3)' }};">
+                                <svg class="ic ic-sm"><use href="#i-check"/></svg>Queued
                             </div>
-                            <div style="display:flex; align-items:center; gap:6px;">
-                                <svg class="ic ic-sm" style="color: {{ $done ? 'var(--green)' : 'var(--ink-3)' }};"><use href="#i-check"/></svg>Resolving
+                            <div style="display:flex; align-items:center; gap:6px; color: {{ ($isRunning || $isDone) ? 'var(--green)' : 'var(--ink-3)' }};">
+                                <svg class="ic ic-sm"><use href="#i-check"/></svg>Connecting
                             </div>
-                            <div style="display:flex; align-items:center; gap:6px;">
-                                <svg class="ic ic-sm" style="color: {{ $done ? 'var(--green)' : 'var(--ink-3)' }};"><use href="#i-check"/></svg>Fetching metadata
+                            <div style="display:flex; align-items:center; gap:6px; color: {{ $isDone ? 'var(--green)' : 'var(--ink-3)' }};">
+                                <svg class="ic ic-sm"><use href="#i-check"/></svg>Fetching metadata
                             </div>
-                            <div style="display:flex; align-items:center; gap:6px; color: {{ $done ? 'var(--green)' : 'var(--ink-3)' }}; font-weight: 500;">
+                            <div style="display:flex; align-items:center; gap:6px; color: {{ $isDone ? 'var(--green)' : 'var(--ink-3)' }}; font-weight: 500;">
                                 <svg class="ic ic-sm"><use href="#i-check"/></svg>Ready
                             </div>
                         </div>
@@ -112,4 +136,14 @@
             <span>Step 1 of 6 · Source</span>
         </div>
     </div>
+
+    @script
+    <script>
+        // Hard-reload the page once the Source job transitions to Done so the
+        // metadata card, Continue button, and any cached UI bits all refresh.
+        Livewire.on('source-completed', () => {
+            window.location.reload();
+        });
+    </script>
+    @endscript
 </div>

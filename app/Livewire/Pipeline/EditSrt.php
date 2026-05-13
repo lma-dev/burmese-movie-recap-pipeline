@@ -85,6 +85,7 @@ class EditSrt extends Component
 
     public function exportSrt(SrtWriter $writer): StreamedResponse
     {
+        $this->currentSegment->setRelation('project', $this->project);
         $path = $writer->writeForSegment($this->currentSegment);
         return response()->streamDownload(
             fn () => print file_get_contents($path),
@@ -101,6 +102,7 @@ class EditSrt extends Component
             Subtitle::whereKey($line['id'])->update(['burmese_text' => $line['burmese_text']]);
         }
         foreach ($this->project->segments as $seg) {
+            $seg->setRelation('project', $this->project);
             $writer->writeForSegment($seg->loadMissing('subtitles'));
         }
 

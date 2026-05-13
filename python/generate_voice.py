@@ -30,10 +30,26 @@ import tempfile
 from _common import die, ensure_dir, progress, read_payload, write_result
 
 
-async def _synth_one(voice: str, text: str, dest_mp3: str) -> None:
+async def _synth_one(voice: str, text: str, dest_mp3: str, max_retries: int = 6) -> None:
+    """
+    Edge TTS is an unauthenticated public endpoint that throttles long
+    sessions (503 WebSocket handshake) — long segments with 30+ lines hit
+    this regularly. Retry with exponential backoff so transient failures
+    don't kill the whole job.
+    """
     import edge_tts
-    communicate = edge_tts.Communicate(text=text, voice=voice)
-    await communicate.save(dest_mp3)
+
+    delay = 1.0
+    for attempt in range(max_retries):
+        try:
+            communicate = edge_tts.Communicate(text=text, voice=voice)
+            await communicate.save(dest_mp3)
+            return
+        except Exception:
+            if attempt == max_retries - 1:
+                raise
+            await asyncio.sleep(delay)
+            delay = min(delay * 2, 30.0)
 
 
 def _ffmpeg_concat(ffmpeg: str, parts: list[tuple[int, str]], duration_ms: int, output: str) -> None:
@@ -61,8 +77,11 @@ def _ffmpeg_concat(ffmpeg: str, parts: list[tuple[int, str]], duration_ms: int, 
     for idx, (start_ms, _) in enumerate(parts):
         filters.append(f"[{idx}:a]adelay={start_ms}|{start_ms},apad[a{idx}]")
     join = "".join(f"[a{i}]" for i in range(len(parts)))
+    # normalize=0 keeps each line at full volume — amix otherwise divides by
+    # the number of inputs, which crushed multi-line segments to ~-37 dB.
+    # Lines are time-sliced via `adelay`, so they don't overlap and won't clip.
     filters.append(
-        f"{join}amix=inputs={len(parts)}:duration=longest:dropout_transition=0,"
+        f"{join}amix=inputs={len(parts)}:duration=longest:dropout_transition=0:normalize=0,"
         f"atrim=0:{duration_ms/1000:.3f}[out]"
     )
 

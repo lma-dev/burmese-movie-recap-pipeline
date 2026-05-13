@@ -106,12 +106,18 @@ def main() -> None:
             audio_filter = "[1:a]anull[aout]"
             audio_map = "[aout]"
         else:
-            # Duck the source under the narrator with sidechaincompress.
+            # Duck the source under the narrator with sidechaincompress, then
+            # mix back in the narrator at full level.
+            # `normalize=0` on amix is critical: the default 1/N normalization
+            # halves every input, which alone was burying the narrator ~6 dB.
+            # The lines from generate_voice.py also need normalize=0 so the
+            # narrator track itself arrives at full volume.
             audio_filter = (
                 "[0:a]volume=1.0[src];"
                 "[src][1:a]sidechaincompress=threshold=0.05:ratio=8:attack=5:"
                 f"release=200:makeup=1[src_ducked];"
-                "[src_ducked][1:a]amix=inputs=2:duration=longest:dropout_transition=0[aout]"
+                "[src_ducked][1:a]amix=inputs=2:duration=longest:"
+                "dropout_transition=0:normalize=0[aout]"
             )
             audio_map = "[aout]"
     else:
