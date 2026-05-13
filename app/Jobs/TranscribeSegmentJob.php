@@ -41,12 +41,16 @@ class TranscribeSegmentJob implements ShouldQueue
             'translate_status'  => StepStatus::Pending,
         ]);
 
+        $provider = config('pipeline.ai.provider');
+        $aiCfg    = config("pipeline.ai.providers.{$provider}");
+
         try {
-            // --- 1) Whisper transcription ---
+            // --- 1) Transcription (Whisper or Gemini) ---
             $transcription = $py->run('transcribe.py', [
-                'segment_path'   => $segment->video_path,
-                'openai_api_key' => config('pipeline.openai.api_key'),
-                'model'          => config('pipeline.openai.whisper_model'),
+                'segment_path' => $segment->video_path,
+                'provider'     => $provider,
+                'api_key'      => $aiCfg['api_key'],
+                'model'        => $aiCfg['transcribe_model'],
             ]);
             $lines = $transcription['lines'] ?? [];
 
@@ -57,12 +61,13 @@ class TranscribeSegmentJob implements ShouldQueue
                 return;
             }
 
-            // --- 2) GPT translation to Burmese ---
+            // --- 2) Translation to Burmese (GPT or Gemini) ---
             $segment->update(['translate_status' => StepStatus::Running]);
             $translated = $py->run('translate.py', [
-                'lines'          => $lines,
-                'openai_api_key' => config('pipeline.openai.api_key'),
-                'model'          => config('pipeline.openai.chat_model'),
+                'lines'    => $lines,
+                'provider' => $provider,
+                'api_key'  => $aiCfg['api_key'],
+                'model'    => $aiCfg['chat_model'],
             ]);
 
             $burmeseByLine = collect($translated['translations'] ?? [])

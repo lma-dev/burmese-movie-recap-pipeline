@@ -74,16 +74,22 @@ def main() -> None:
         f"fps={fps}",
     ]
     if srt and os.path.isfile(srt):
-        srt_arg = srt.replace(":", r"\:").replace("'", r"\'")
+        # Build the subtitles filter via filter_complex on a separate line
+        # so we can hand-craft escaping rather than fight ffmpeg's filterchain
+        # parser, which gets confused by commas inside force_style.
+        def _esc_path(p: str) -> str:
+            return p.replace("\\", "\\\\").replace(":", r"\:").replace("'", r"\'")
+
+        srt_arg = _esc_path(srt)
         style = (
             "FontName=Noto Sans Myanmar,FontSize=22,PrimaryColour=&H00FFFFFF,"
             "OutlineColour=&H00000000,BorderStyle=3,Outline=2,Shadow=0,"
             "Alignment=2,MarginV=80"
         )
         if font_dir:
-            vf_parts.append(f"subtitles='{srt_arg}':fontsdir='{font_dir}':force_style='{style}'")
+            vf_parts.append(f"subtitles={srt_arg}:fontsdir={_esc_path(font_dir)}:force_style='{style}'")
         else:
-            vf_parts.append(f"subtitles='{srt_arg}':force_style='{style}'")
+            vf_parts.append(f"subtitles={srt_arg}:force_style='{style}'")
 
     vf = ",".join(vf_parts)
 

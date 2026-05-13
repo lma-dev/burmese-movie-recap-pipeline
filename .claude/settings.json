@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(chmod 775 /Users/recycle/work/ProjectPlayGround/burmese-movie-recap-pipeline/bootstrap/cache)"
+    ]
+  }
+}

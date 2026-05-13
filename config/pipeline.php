@@ -30,12 +30,26 @@ return [
     'storage_root'       => env('PIPELINE_STORAGE_ROOT', 'pipeline'),
 
     // -----------------------------------------------------------------
-    // OpenAI (Whisper for transcription, GPT for translation)
+    // AI provider (transcription + translation)
+    //
+    // Flip the active provider via AI_PROVIDER in .env. Each provider
+    // block holds its own credentials and model names. The Job reads
+    // `pipeline.ai.providers.{provider}` based on the active provider.
     // -----------------------------------------------------------------
-    'openai' => [
-        'api_key'        => env('OPENAI_API_KEY'),
-        'whisper_model'  => env('OPENAI_WHISPER_MODEL', 'whisper-1'),
-        'chat_model'     => env('OPENAI_CHAT_MODEL', 'gpt-4o-mini'),
+    'ai' => [
+        'provider'  => env('AI_PROVIDER', 'openai'),  // 'openai' | 'gemini'
+        'providers' => [
+            'openai' => [
+                'api_key'          => env('OPENAI_API_KEY'),
+                'transcribe_model' => env('OPENAI_WHISPER_MODEL', 'whisper-1'),
+                'chat_model'       => env('OPENAI_CHAT_MODEL', 'gpt-4o-mini'),
+            ],
+            'gemini' => [
+                'api_key'          => env('GEMINI_API_KEY'),
+                'transcribe_model' => env('GEMINI_TRANSCRIBE_MODEL', 'gemini-2.5-flash'),
+                'chat_model'       => env('GEMINI_CHAT_MODEL', 'gemini-2.5-flash'),
+            ],
+        ],
     ],
 
     // -----------------------------------------------------------------

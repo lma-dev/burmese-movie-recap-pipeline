@@ -36,6 +36,13 @@ def main() -> None:
 
     progress("connecting", 10)
 
+    # yt-dlp's --print-to-file APPENDS — wipe any stale meta from prior runs
+    # so a retry doesn't accumulate duplicate lines that break the parser.
+    for fname in (".title", ".duration", ".thumb"):
+        p = os.path.join(output_dir, fname)
+        if os.path.isfile(p):
+            os.remove(p)
+
     local_template = os.path.join(output_dir, "source.%(ext)s")
 
     # Single call: download as mp4 + dump info JSON via --print

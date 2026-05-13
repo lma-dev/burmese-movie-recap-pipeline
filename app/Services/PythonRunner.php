@@ -87,7 +87,9 @@ class PythonRunner
     private function processEnv(): array
     {
         return array_filter([
-            'OPENAI_API_KEY' => config('pipeline.openai.api_key'),
+            'AI_PROVIDER'    => config('pipeline.ai.provider'),
+            'OPENAI_API_KEY' => config('pipeline.ai.providers.openai.api_key'),
+            'GEMINI_API_KEY' => config('pipeline.ai.providers.gemini.api_key'),
             'EDGE_TTS_VOICE' => config('pipeline.tts.voice'),
         ]);
     }
